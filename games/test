@@ -1,29 +1,20 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/refs/heads/main/keysystem"))()
-wait("5")
-local player = game.Players.LocalPlayer
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = player.PlayerGui
+whitelist_key = "Fmnus4AK6=mqNEpcJQnEnz8nhSlA=JpxHc3-Wdd4CYKrgM=wW9"
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0.3, 0, 0.1, 0)
-frame.Position = UDim2.new(0.35, 0, 0.45, 0)
-frame.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-frame.Parent = screenGui
+local allKeys = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/refs/heads/main/allkeys.lua"))()
+local blacklistedUsers = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/refs/heads/main/blacklistedusers.lua"))()
 
-local label = Instance.new("TextLabel")
-label.Size = UDim2.new(1, 0, 1, 0)
-label.Text = "Successfully worked!"
-label.TextColor3 = Color3.fromRGB(255, 255, 255)
-label.TextSize = 30
-label.BackgroundTransparency = 1
-label.Parent = frame
-
-for i = 1, 30 do
-    frame.BackgroundTransparency = i / 30
-    label.TextTransparency = i / 30
-    wait(0.1)
+for _, data in pairs(blacklistedUsers) do
+    if data.key == whitelist_key then
+        print(data.username .. " is blacklisted. Contact support if you think this is a mistake.")
+        return
+    end
 end
 
-wait(2)
+for _, data in pairs(allKeys) do
+    if data.key == whitelist_key then
+        print("Greetings, " .. data.username)
+        return
+    end
+end
 
-screenGui:Destroy()
+print("The key you entered is invalid. Please visit our Discord server to obtain a new key, contact support for assistance, or wait a little bit due to rate limiting (max of 5 minutes).")
