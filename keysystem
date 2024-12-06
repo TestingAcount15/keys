@@ -1,7 +1,13 @@
--- Load the data from the GitHub URL
 local allKeys = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/refs/heads/main/allkeys.lua"))()
+local blacklistedUsers = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/refs/heads/main/blacklistedusers.lua"))()
 
--- Check the keys and greet the corresponding user
+for _, data in pairs(blacklistedUsers) do
+    if data.key == whitelist_key then
+        print(data.username .. " is blacklisted. Contact support if you think this is a mistake.")
+        return
+    end
+end
+
 for _, data in pairs(allKeys) do
     if data.key == whitelist_key then
         print("Greetings, " .. data.username)
@@ -9,4 +15,4 @@ for _, data in pairs(allKeys) do
     end
 end
 
-print("It didn't work.")
+print("The key you entered is invalid. Please visit our Discord server to obtain a new key or contact support for assistance.")
