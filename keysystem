@@ -1,0 +1,12 @@
+-- Load the data from the GitHub URL
+local allKeys = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/refs/heads/main/allkeys.lua"))()
+
+-- Check the keys and greet the corresponding user
+for _, data in pairs(allKeys) do
+    if data.key == whitelist_key then
+        print("Greetings, " .. data.username)
+        return
+    end
+end
+
+print("It didn't work.")
