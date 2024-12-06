@@ -15,4 +15,4 @@ for _, data in pairs(allKeys) do
     end
 end
 
-print("The key you entered is invalid. Please visit our Discord server to obtain a new key or contact support for assistance.")
+print("The key you entered is invalid. Please visit our Discord server to obtain a new key, contact support for assistance, or wait a little bit due to rate limiting (max of 5 minutes).")
