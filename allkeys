@@ -1,10 +1,10 @@
-local allKeys = {
-    ["1164386504412500009"] = {
-        username = "gotham1.0",
+return {
+    {
         key = "Cdf_LdUVCLNZvrIGcd7fu=T1pSFECZ=iS=S6r88Y13f07aApUI",
+        username = "gotham1.0",
     },
-    ["1423969364739230009"] = {
-        username = "tomboy87",
+    {
         key = "1drj7cknxqwboaaWzPGWQoa5mCnj-NyANA-OG4fMtrIQRv2-XR",
+        username = "tomboy87",
     }
 }
