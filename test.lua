@@ -298,7 +298,7 @@ local function populateItemList()
                         else
                             itemCounts[itemName] = amount
                         end
-                        showNotification("+ " .. itemCounts[itemName] .. " " .. itemName .. "s")
+                        showNotification("+ " .. itemCounts[itemName] .. " " .. itemName)
 
                         popupFrame:Destroy()
                     else
