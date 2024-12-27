@@ -1,5 +1,5 @@
-local allKeys = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/refs/heads/main/allkeys.lua"))()
-local blacklistedUsers = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/refs/heads/main/blacklistedusers.lua"))()
+local allKeys = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/main/allkeys.lua"))()
+local blacklistedUsers = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/main/blacklistedusers.lua"))()
 
 local function checkKey(whitelist_key)
     if not whitelist_key or whitelist_key == "" then
@@ -24,7 +24,7 @@ local function checkKey(whitelist_key)
     end
 
     if isValidKey then
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/refs/heads/main/test.lua"))()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/main/test.lua"))()
     else
         print("The key you entered is invalid. Please visit our Discord server to obtain a new key, contact support for assistance, or wait a little bit due to rate limiting (max of 5 minutes).")
     end
