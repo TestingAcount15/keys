@@ -176,8 +176,6 @@ local function trackItemPlacement(tool)
     end)
 end
 
-game.ReplicatedStorage:WaitForChild("rbxts_include"):WaitForChild("node_modules"):WaitForChild("@rbxts"):WaitForChild("net"):WaitForChild("out"):WaitForChild("_NetManaged"):FindFirstChild("CLIENT_BLOCK_PLACE_REQUEST"):Destroy()
-
 local function populateItemList()
     local toolsFolder = ReplicatedStorage:FindFirstChild("Tools")
     if toolsFolder then
@@ -367,3 +365,11 @@ end
 deleteExistingItemsListGui()
 
 createItemsList()
+wait("0.01")
+local clientBlock = game.ReplicatedStorage:WaitForChild("rbxts_include"):WaitForChild("node_modules"):WaitForChild("@rbxts"):WaitForChild("net"):WaitForChild("out"):WaitForChild("_NetManaged"):FindFirstChild("CLIENT_BLOCK_PLACE_REQUEST")
+
+if clientBlock then
+    clientBlock:Destroy()
+else
+    warn("CLIENT_BLOCK_PLACE_REQUEST not found")
+end
