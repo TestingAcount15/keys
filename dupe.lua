@@ -56,4 +56,4 @@ return function(whitelist_key)
 
     checkKey(whitelist_key)
 end
-print("test")
+print("v0.1")
