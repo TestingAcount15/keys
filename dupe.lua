@@ -15,14 +15,7 @@ return function(whitelist_key)
     local allKeys = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/main/allkeys.lua"))()
     local blacklistedUsers = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/main/blacklistedusers.lua"))()
 
-    print("Loaded allKeys:")
-    printTable(allKeys)
-
-    print("Loaded blacklistedUsers:")
-    printTable(blacklistedUsers)
-
     local function checkKey(key)
-        print("Key passed to function:", key)
         if not key or key == "" then
             print("No key entered. Please provide a valid key to continue.")
             return false
@@ -35,25 +28,19 @@ return function(whitelist_key)
             end
         end
 
-        local isValidKey = false
         for _, data in pairs(allKeys) do
-            print("Checking key:", data.key)
             if data.key == key then
                 print("Greetings, " .. data.username)
-                isValidKey = true
-                break
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/main/test.lua"))()
+                return true
             end
         end
 
-        if isValidKey then
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/main/test.lua"))()
-        else
-            print("The key you entered is invalid. Please visit our Discord server to obtain a new key, contact support for assistance, or wait a little bit due to rate limiting (max of 5 minutes).")
-        end
-
-        return isValidKey
+        print("The key you entered is invalid. Please obtain a new key.")
+        return false
     end
 
-    checkKey(whitelist_key)
+    print("Checking whitelist key...")
+    return checkKey(whitelist_key)
 end
-print("v0.1")
+print("v1.0")
