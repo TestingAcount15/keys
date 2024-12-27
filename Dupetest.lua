@@ -1,16 +1,11 @@
-local function fetchLatestData()
-    local allKeys = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/refs/heads/main/allkeys.lua"))()
-    local blacklistedUsers = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/refs/heads/main/blacklistedusers.lua"))()
-    return allKeys, blacklistedUsers
-end
+local allKeys = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/refs/heads/main/allkeys.lua"))()
+local blacklistedUsers = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/refs/heads/main/blacklistedusers.lua"))()
 
 local function checkKey(whitelist_key)
     if not whitelist_key or whitelist_key == "" then
         print("No key entered. Please provide a valid key to continue.")
         return false
     end
-
-    local allKeys, blacklistedUsers = fetchLatestData()
 
     for _, data in pairs(blacklistedUsers) do
         if data.key == whitelist_key then
@@ -37,4 +32,5 @@ local function checkKey(whitelist_key)
     return isValidKey
 end
 
+local whitelist_key = ""
 checkKey(whitelist_key)
