@@ -1,7 +1,11 @@
 local allKeys = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/main/allkeys.lua"))()
 local blacklistedUsers = loadstring(game:HttpGet("https://raw.githubusercontent.com/TestingAcount15/keys/main/blacklistedusers.lua"))()
 
+print("Loaded allKeys:", allKeys)
+print("Loaded blacklistedUsers:", blacklistedUsers)
+
 local function checkKey(whitelist_key)
+    print("Key passed to function:", whitelist_key)
     if not whitelist_key or whitelist_key == "" then
         print("No key entered. Please provide a valid key to continue.")
         return false
@@ -16,6 +20,7 @@ local function checkKey(whitelist_key)
 
     local isValidKey = false
     for _, data in pairs(allKeys) do
+        print("Checking key:", data.key)
         if data.key == whitelist_key then
             print("Greetings, " .. data.username)
             isValidKey = true
