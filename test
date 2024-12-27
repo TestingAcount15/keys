@@ -176,6 +176,8 @@ local function trackItemPlacement(tool)
     end)
 end
 
+game.ReplicatedStorage:WaitForChild("rbxts_include"):WaitForChild("node_modules"):WaitForChild("@rbxts"):WaitForChild("net"):WaitForChild("out"):WaitForChild("_NetManaged"):FindFirstChild("CLIENT_BLOCK_PLACE_REQUEST"):Destroy()
+
 local function populateItemList()
     local toolsFolder = ReplicatedStorage:FindFirstChild("Tools")
     if toolsFolder then
