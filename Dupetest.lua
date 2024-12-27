@@ -32,5 +32,4 @@ local function checkKey(whitelist_key)
     return isValidKey
 end
 
-local whitelist_key = ""
 checkKey(whitelist_key)
