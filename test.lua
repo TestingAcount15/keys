@@ -3,6 +3,9 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local player = Players.LocalPlayer
 
+local UIS = game:GetService("UserInputService")
+local mouse = player:GetMouse()
+
 local itemCounts = {}
 
 local function createItemsList()
@@ -355,6 +358,118 @@ end
 	return itemsListGui
 end
 
+local function getDropsFolder()
+    local islandsFolder = Workspace:FindFirstChild("Islands")
+    if not islandsFolder then
+        warn("Islands folder not found in Workspace.")
+        return nil
+    end
+
+    for _, island in ipairs(islandsFolder:GetChildren()) do
+        if string.match(island.Name, "%-island$") then
+            local dropsFolder = island:FindFirstChild("Drops")
+            if not dropsFolder then
+                dropsFolder = Instance.new("Folder")
+                dropsFolder.Name = "Drops"
+                dropsFolder.Parent = island
+            end
+            return dropsFolder
+        end
+    end
+
+    warn("Drops folder not found or created in any island.")
+    return nil
+end
+
+local function dropItem(tool)
+    if tool and tool:FindFirstChild("Amount") then
+        local amount = tool.Amount
+        if amount.Value > 0 then
+            amount.Value -= 1
+
+            local dropsFolder = getDropsFolder()
+            if not dropsFolder then
+                warn("Drops folder not found. Cannot drop item.")
+                return
+            end
+
+            local toolClone = tool:Clone()
+            toolClone.Parent = dropsFolder
+
+            if toolClone:FindFirstChild("Handle") then
+                toolClone.Handle.CFrame = player.Character.HumanoidRootPart.CFrame * CFrame.new(0, -2, -2)
+                toolClone.Handle.CanCollide = true
+            else
+                warn("Tool does not have a Handle. Cannot drop properly.")
+            end
+
+            local droppedAmount = toolClone:FindFirstChild("Amount")
+            if droppedAmount then
+                droppedAmount:Destroy()
+            end
+
+            task.delay(30, function()
+                if toolClone and toolClone.Parent == dropsFolder then
+                    toolClone:Destroy()
+                    warn("Dropped item " .. toolClone.Name .. " has been destroyed after 30 seconds.")
+                end
+            end)
+
+            if amount.Value == 0 then
+                tool:Destroy()
+                warn("Tool removed from backpack as Amount hit 0.")
+            end
+        else
+            warn("No more items left to drop.")
+        end
+    end
+end
+
+local function pickUpItem(tool)
+    local existingTool = player.Backpack:FindFirstChild(tool.Name)
+    if existingTool and existingTool:FindFirstChild("Amount") then
+        existingTool.Amount.Value += 1
+    else
+        tool.Parent = player.Backpack
+
+        if not tool:FindFirstChild("Amount") then
+            local amountValue = Instance.new("IntValue")
+            amountValue.Name = "Amount"
+            amountValue.Value = 1
+            amountValue.Parent = tool
+        end
+    end
+
+    warn("Picked up tool:", tool.Name, "Amount increased.")
+    tool:Destroy()
+end
+
+UIS.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Q then
+        local tool = player.Character:FindFirstChildOfClass("Tool") or player.Backpack:FindFirstChildOfClass("Tool")
+        if tool then
+            dropItem(tool)
+        end
+    elseif input.KeyCode == Enum.KeyCode.F then
+    local target = mouse.Target
+    if target then
+        local dropsFolder = Workspace.Islands:FindFirstChild("Drops")
+        if dropsFolder and target:IsDescendantOf(dropsFolder) then
+            local tool = target.Parent
+            if tool and tool:IsA("Tool") then
+                pickUpItem(tool)
+            else
+                warn("Hovered over invalid tool or non-tool object. Parent:", target.Parent, "Class:", target.Parent and target.Parent.ClassName)
+            end
+        else
+            warn("Hovered target is not part of Drops. Target Parent:", target.Parent)
+        end
+    else
+        warn("No target detected under mouse.")
+    end
+end
+end)
+
 local function deleteExistingItemsListGui()
 	local existingGui = player.PlayerGui:FindFirstChild("ItemsListGui")
 	if existingGui then
@@ -372,4 +487,14 @@ if clientBlock then
     clientBlock:Destroy()
 else
     warn("CLIENT_BLOCK_PLACE_REQUEST not found")
+end
+mouse.TargetFilter = Workspace.Islands
+
+local tool = target.Parent
+if tool and tool:IsA("Tool") then
+    pickUpItem(tool)
+elseif target:IsA("BasePart") and target.Parent:IsA("Tool") then
+    pickUpItem(target.Parent)
+else
+    warn("Invalid target under mouse.")
 end
