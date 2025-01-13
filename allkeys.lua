@@ -1,3 +1,3 @@
 return {
-    { key = "fuck you nigga ima eat that ass", username = "diddy" }
+    { key = "no", username = "haha nigga" }
 }
