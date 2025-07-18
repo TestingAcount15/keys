@@ -6,98 +6,87 @@ local player = Players.LocalPlayer
 local UIS = game:GetService("UserInputService")
 local mouse = player:GetMouse()
 
-local itemCounts = {}
+local uiItemDisplays = {}
 
-local function createItemsList()
-	local itemsListGui = Instance.new("ScreenGui")
-	itemsListGui.Name = "ItemsListGui"
-	itemsListGui.ResetOnSpawn = false
-	itemsListGui.Parent = player.PlayerGui
+local function parseAmountString(amountString)
+    amountString = string.lower(string.gsub(amountString, "%s", ""))
+    local numberPart = tonumber(string.match(amountString, "^(%d+%.?%d*)"))
+    local suffixPart = string.match(amountString, "[kmbtqa]$")
 
-	local itemsFrame = Instance.new("Frame")
-	itemsFrame.Size = UDim2.new(0.25, 0, 0.5, 0)
-	itemsFrame.Position = UDim2.new(0.75, 0, 0.25, 0)
-	itemsFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-	itemsFrame.BackgroundTransparency = 0.8
-	itemsFrame.BorderSizePixel = 0
-	itemsFrame.Active = true
-	itemsFrame.Draggable = true
-	itemsFrame.Visible = true
-	itemsFrame.Parent = itemsListGui
+    if not numberPart then
+        return nil
+    end
 
-	local itemsTitleLabel = Instance.new("TextLabel")
-	itemsTitleLabel.Size = UDim2.new(1, 0, 0.1, 0)
-	itemsTitleLabel.Position = UDim2.new(0, 0, 0, 0)
-	itemsTitleLabel.BackgroundTransparency = 1
-	itemsTitleLabel.Text = "Item List"
-	itemsTitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-	itemsTitleLabel.TextSize = 24
-	itemsTitleLabel.Font = Enum.Font.GothamSemibold
-	itemsTitleLabel.Parent = itemsFrame
+    if suffixPart then
+        if suffixPart == "k" then
+            numberPart = numberPart * 1000
+        elseif suffixPart == "m" then
+            numberPart = numberPart * 1000000
+        elseif suffixPart == "b" then
+            numberPart = numberPart * 1000000000
+        elseif suffixPart == "t" then
+            numberPart = numberPart * 1000000000000
+        elseif suffixPart == "qa" then
+            numberPart = numberPart * 1000000000000000
+        else
+            return nil
+        end
+    end
 
-	local itemListFrame = Instance.new("ScrollingFrame")
-	itemListFrame.Size = UDim2.new(1, 0, 0.8, 0)
-	itemListFrame.Position = UDim2.new(0, 0, 0.2, 0)
-	itemListFrame.BackgroundTransparency = 1
-	itemListFrame.ScrollBarThickness = 8
-	itemListFrame.Parent = itemsFrame
+    return math.floor(numberPart)
+end
 
-	local UIListLayout = Instance.new("UIListLayout")
-	UIListLayout.Parent = itemListFrame
-	UIListLayout.Padding = UDim.new(0, 5)
-	UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+local function showNotification(message)
+    local itemsListGui = player.PlayerGui:FindFirstChild("ItemsListGui")
+    if not itemsListGui then return end
 
-	local function showNotification(message)
-		local existingNotification = itemsListGui:FindFirstChild("Notification")
-		if existingNotification then
-			existingNotification:Destroy()
-		end
+    local existingNotification = itemsListGui:FindFirstChild("Notification")
+    if existingNotification then
+        existingNotification:Destroy()
+    end
 
-		local notification = Instance.new("TextLabel")
-		notification.Name = "Notification"
-		notification.Size = UDim2.new(0.2, 0, 0, 25)
-		notification.Position = UDim2.new(0.76, 0, 0.925, 0)
-		notification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-		notification.BackgroundTransparency = 0.9
-		notification.Text = message
-		notification.TextColor3 = Color3.fromRGB(153, 255, 175)
-		notification.TextSize = 25
-		notification.Font = Enum.Font.FredokaOne
-		notification.TextStrokeTransparency = 0.5
-		notification.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-		notification.TextXAlignment = Enum.TextXAlignment.Left
+    local notification = Instance.new("TextLabel")
+    notification.Name = "Notification"
+    notification.Size = UDim2.new(0.2, 0, 0, 30)
+    notification.Position = UDim2.new(0.76, 0, 0.925, 0)
+    notification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    notification.BackgroundTransparency = 0.9
+    notification.Text = message
+    notification.TextColor3 = Color3.fromRGB(153, 255, 175)
+    notification.TextSize = 25
+    notification.Font = Enum.Font.FredokaOne
+    notification.TextStrokeTransparency = 0.5
+    notification.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    notification.TextXAlignment = Enum.TextXAlignment.Left
 
-		local padding = Instance.new("UIPadding")
-		padding.Parent = notification
-		padding.PaddingLeft = UDim.new(0, 10)
+    local padding = Instance.new("UIPadding")
+    padding.Parent = notification
+    padding.PaddingLeft = UDim.new(0, 10)
 
-		notification.Parent = itemsListGui
+    notification.Parent = itemsListGui
 
-		local fadeInTween = game:GetService("TweenService"):Create(
-		notification,
-		TweenInfo.new(1, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-		{TextTransparency = 0, BackgroundTransparency = 0.9}
-		)
+    local fadeInTween = game:GetService("TweenService"):Create(
+        notification,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {TextTransparency = 0, BackgroundTransparency = 0.7}
+    )
 
-		local fadeOutTween = game:GetService("TweenService"):Create(
-		notification,
-		TweenInfo.new(1, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-		{TextTransparency = 1, BackgroundTransparency = 0.9}
-		)
+    local fadeOutTween = game:GetService("TweenService"):Create(
+        notification,
+        TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {TextTransparency = 1, BackgroundTransparency = 0.9}
+    )
 
-		fadeInTween:Play()
+    fadeInTween:Play()
 
-		wait(1)
+    task.wait(2)
 
-		wait(5)
+    fadeOutTween:Play()
 
-		fadeOutTween:Play()
-
-		fadeOutTween.Completed:Connect(function()
-			notification:Destroy()
-		end)
-	end
+    fadeOutTween.Completed:Connect(function()
+        notification:Destroy()
+    end)
+end
 
 local function findBlocksFolder()
     local islandsFolder = Workspace:FindFirstChild("Islands")
@@ -114,7 +103,6 @@ local function findBlocksFolder()
             end
         end
     end
-
     warn("Blocks folder not found in any island.")
     return nil
 end
@@ -138,7 +126,6 @@ local function trackItemPlacement(tool)
             initialParts[part] = true
         end
 
-        warn("Initial parts count:", #blocksFolder:GetChildren())
         task.wait(0.5)
 
         local newParts = {}
@@ -158,15 +145,11 @@ local function trackItemPlacement(tool)
                     placementValue.Value = placementCount
                     placementValue.Parent = newPart
 
-                    warn("Placement detected for tool:", heldToolName, "Placement Number:", placementCount)
-
                     local amount = tool:FindFirstChild("Amount")
                     if amount and amount.Value > 0 then
                         amount.Value -= 1
-                        warn("Updated tool amount:", amount.Value)
                         if amount.Value <= 0 then
                             tool:Destroy()
-                            warn(tool.Name .. " has been depleted and removed.")
                         end
                     end
                 else
@@ -179,183 +162,352 @@ local function trackItemPlacement(tool)
     end)
 end
 
-local function populateItemList()
+local function updateItemDisplay(itemName, amount)
+    if uiItemDisplays[itemName] and uiItemDisplays[itemName].label then
+        uiItemDisplays[itemName].label.Text = itemName
+    end
+end
+
+local function setupBackpackListeners()
+    for _, toolInBackpack in ipairs(player.Backpack:GetChildren()) do
+        if toolInBackpack:IsA("Tool") then
+            local itemName = toolInBackpack:FindFirstChild("DisplayName") and toolInBackpack.DisplayName.Value or toolInBackpack.Name
+            local amount = toolInBackpack:FindFirstChild("Amount") and toolInBackpack.Amount.Value or 1
+            updateItemDisplay(itemName, amount)
+
+            local amountValue = toolInBackpack:FindFirstChild("Amount")
+            if amountValue then
+                amountValue.Changed:Connect(function(newAmount)
+                    updateItemDisplay(itemName, newAmount)
+                end)
+            end
+        end
+    end
+
+    player.Backpack.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") then
+            local itemName = child:FindFirstChild("DisplayName") and child.DisplayName.Value or child.Name
+            local amount = child:FindFirstChild("Amount") and child.Amount.Value or 1
+            updateItemDisplay(itemName, amount)
+
+            local amountValue = child:FindFirstChild("Amount")
+            if amountValue then
+                amountValue.Changed:Connect(function(newAmount)
+                    updateItemDisplay(itemName, newAmount)
+                end)
+            else
+                updateItemDisplay(itemName, 1)
+            end
+        end
+    end)
+
+    player.Backpack.ChildRemoved:Connect(function(child)
+        if child:IsA("Tool") then
+            local itemName = child:FindFirstChild("DisplayName") and child.DisplayName.Value or child.Name
+            updateItemDisplay(itemName, 0)
+        end
+    end)
+end
+
+local function populateItemList(itemsListGui)
     local toolsFolder = ReplicatedStorage:FindFirstChild("Tools")
     if toolsFolder then
+        local itemListFrame = itemsListGui:FindFirstChild("ItemsFrame"):FindFirstChild("ItemListFrame")
+        if not itemListFrame then return end
+
         for _, tool in ipairs(toolsFolder:GetChildren()) do
             local itemName = tool:FindFirstChild("DisplayName") and tool.DisplayName.Value or tool.Name
 
-            local itemButton = Instance.new("TextButton")
-            itemButton.Size = UDim2.new(0.9, 0, 0, 40)
-            itemButton.AnchorPoint = Vector2.new(0.5, 0)
-            itemButton.Position = UDim2.new(0.5, 0, 0, 0)
-            itemButton.BackgroundTransparency = 0.5
-            itemButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-            itemButton.Text = itemName
-            itemButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-            itemButton.TextSize = 18
-            itemButton.Font = Enum.Font.GothamSemibold
-            itemButton.Parent = itemListFrame
+            local itemContainer = Instance.new("Frame")
+            itemContainer.Size = UDim2.new(1, 0, 1, 0)
+            itemContainer.BackgroundTransparency = 0.8
+            itemContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            itemContainer.Parent = itemListFrame
 
-            local itemButtonCorner = Instance.new("UICorner")
-            itemButtonCorner.CornerRadius = UDim.new(0, 8)
-            itemButtonCorner.Parent = itemButton
+            local itemContainerCorner = Instance.new("UICorner")
+            itemContainerCorner.CornerRadius = UDim.new(0, 8)
+            itemContainerCorner.Parent = itemContainer
 
-            itemButton.MouseButton1Click:Connect(function()
-                local existingPopup = itemsListGui:FindFirstChild("ItemPopup")
-                if existingPopup then
-                    existingPopup:Destroy()
-                end
+            local itemContainerGradient = Instance.new("UIGradient")
+            itemContainerGradient.Color = ColorSequence.new(Color3.fromRGB(40, 40, 40), Color3.fromRGB(25, 25, 25))
+            itemContainerGradient.Rotation = 90
+            itemContainerGradient.Parent = itemContainer
 
-                local popupFrame = Instance.new("Frame")
-                popupFrame.Name = "ItemPopup"
-                popupFrame.Size = UDim2.new(0.2, 0, 0.3, 0)
-                popupFrame.Position = UDim2.new(0.35, 0, 0.35, 0)
-                popupFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-                popupFrame.BackgroundTransparency = 0.8
-                popupFrame.BorderSizePixel = 0
-                popupFrame.Active = true
-                popupFrame.Draggable = true
-                popupFrame.Parent = itemsListGui
+            local itemNameLabel = Instance.new("TextLabel")
+            itemNameLabel.Size = UDim2.new(0.5, 0, 1, 0)
+            itemNameLabel.Position = UDim2.new(0, 0, 0, 0)
+            itemNameLabel.BackgroundTransparency = 1
+            itemNameLabel.Text = itemName
+            itemNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            itemNameLabel.TextSize = 16
+            itemNameLabel.Font = Enum.Font.GothamSemibold
+            itemNameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            itemNameLabel.TextScaled = true
+            itemNameLabel.Parent = itemContainer
 
-                local amountLabel = Instance.new("TextLabel")
-                amountLabel.Size = UDim2.new(1, 0, 0.2, 0)
-                amountLabel.Position = UDim2.new(0, 0, 0.1, 0)
-                amountLabel.BackgroundTransparency = 1
-                amountLabel.Text = "Item amount:"
-                amountLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-                amountLabel.TextSize = 18
-                amountLabel.Font = Enum.Font.GothamSemibold
-                amountLabel.Parent = popupFrame
+            local padding = Instance.new("UIPadding")
+            padding.Parent = itemNameLabel
+            padding.PaddingLeft = UDim.new(0, 10)
 
-                local amountTextBox = Instance.new("TextBox")
-                amountTextBox.Size = UDim2.new(0.8, 0, 0.2, 0)
-                amountTextBox.Position = UDim2.new(0.1, 0, 0.4, 0)
-                amountTextBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-                amountTextBox.BackgroundTransparency = 0.5
-                amountTextBox.BorderSizePixel = 0
-                amountTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-                amountTextBox.PlaceholderText = "Enter amount..."
-                amountTextBox.Font = Enum.Font.Gotham
-                amountTextBox.TextSize = 16
-                amountTextBox.Parent = popupFrame
+            local amountTextBox = Instance.new("TextBox")
+            amountTextBox.Size = UDim2.new(0.2, 0, 0.8, 0)
+            amountTextBox.Position = UDim2.new(0.52, 0, 0.5, 0)
+            amountTextBox.AnchorPoint = Vector2.new(0, 0.5)
+            amountTextBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            amountTextBox.BackgroundTransparency = 0.2
+            amountTextBox.BorderSizePixel = 0
+            amountTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+            amountTextBox.PlaceholderText = "Amt"
+            amountTextBox.Text = "1"
+            amountTextBox.Font = Enum.Font.Gotham
+            amountTextBox.TextSize = 14
+            amountTextBox.Parent = itemContainer
 
-                local amountTextBoxCorner = Instance.new("UICorner")
-                amountTextBoxCorner.CornerRadius = UDim.new(0, 8)
-                amountTextBoxCorner.Parent = amountTextBox
+            local amountTextBoxCorner = Instance.new("UICorner")
+            amountTextBoxCorner.CornerRadius = UDim.new(0, 6)
+            amountTextBoxCorner.Parent = amountTextBox
 
-                local confirmButton = Instance.new("TextButton")
-                confirmButton.Size = UDim2.new(0.6, 0, 0.2, 0)
-                confirmButton.Position = UDim2.new(0.2, 0, 0.7, 0)
-                confirmButton.BackgroundColor3 = Color3.fromRGB(50, 122, 183)
-                confirmButton.BackgroundTransparency = 0.5
-                confirmButton.BorderSizePixel = 0
-                confirmButton.Text = "OK"
-                confirmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-                confirmButton.TextSize = 18
-                confirmButton.Font = Enum.Font.GothamSemibold
-                confirmButton.Parent = popupFrame
+            local okButton = Instance.new("TextButton")
+            okButton.Size = UDim2.new(0.18, 0, 0.8, 0)
+            okButton.Position = UDim2.new(0.75, 0, 0.5, 0)
+            okButton.AnchorPoint = Vector2.new(0, 0.5)
+            okButton.BackgroundColor3 = Color3.fromRGB(85, 85, 85)
+            okButton.BackgroundTransparency = 0.1
+            okButton.BorderSizePixel = 0
+            okButton.Text = "OK"
+            okButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            okButton.TextSize = 14
+            okButton.Font = Enum.Font.GothamSemibold
+            okButton.Parent = itemContainer
 
-                local confirmButtonCorner = Instance.new("UICorner")
-                confirmButtonCorner.CornerRadius = UDim.new(0, 8)
-                confirmButtonCorner.Parent = confirmButton
+            local okButtonCorner = Instance.new("UICorner")
+            okButtonCorner.CornerRadius = UDim.new(0, 6)
+            okButtonCorner.Parent = okButton
 
-                confirmButton.MouseButton1Click:Connect(function()
-                    local amount = tonumber(amountTextBox.Text)
-                    if amount then
-                        local existingItem = nil
-                        for _, item in ipairs(player.Backpack:GetChildren()) do
-                            if item:IsA("Tool") and item:FindFirstChild("DisplayName") and item.DisplayName.Value == tool.DisplayName.Value then
-                                existingItem = item
-                                break
-                            end
+            local okButtonGradient = Instance.new("UIGradient")
+            okButtonGradient.Color = ColorSequence.new(Color3.fromRGB(85, 85, 85), Color3.fromRGB(70, 70, 70))
+            okButtonGradient.Rotation = 90
+            okButtonGradient.Parent = okButton
+
+            okButton.MouseButton1Click:Connect(function()
+                local amount = parseAmountString(amountTextBox.Text)
+                if amount and amount > 0 then
+                    local existingItem = nil
+                    for _, itemInBackpack in ipairs(player.Backpack:GetChildren()) do
+                        if itemInBackpack:IsA("Tool") and itemInBackpack:FindFirstChild("DisplayName") and itemInBackpack.DisplayName.Value == tool.DisplayName.Value then
+                            existingItem = itemInBackpack
+                            break
                         end
-
-                        if existingItem then
-                            if existingItem:FindFirstChild("Amount") then
-                                existingItem.Amount.Value = existingItem.Amount.Value + amount
-                            else
-                                local amountValue = Instance.new("IntValue")
-                                amountValue.Name = "Amount"
-                                amountValue.Value = amount
-                                amountValue.Parent = existingItem
-                            end
-                        else
-                            local newItem = tool:Clone()
-                            newItem.Parent = player.Backpack
-
-                            if newItem:FindFirstChild("Amount") then
-                                newItem.Amount.Value = amount
-                            else
-                                local amountValue = Instance.new("IntValue")
-                                amountValue.Name = "Amount"
-                                amountValue.Value = amount
-                                amountValue.Parent = newItem
-                            end
-
-                            trackItemPlacement(newItem)
-                        end
-
-                        if itemCounts[itemName] then
-                            itemCounts[itemName] = itemCounts[itemName] + amount
-                        else
-                            itemCounts[itemName] = amount
-                        end
-                        showNotification("+ " .. itemCounts[itemName] .. " " .. itemName)
-
-                        popupFrame:Destroy()
-                    else
-                        warn("Invalid amount entered.")
                     end
-                end)
+
+                    if existingItem then
+                        if existingItem:FindFirstChild("Amount") then
+                            existingItem.Amount.Value = existingItem.Amount.Value + amount
+                        else
+                            local amountValue = Instance.new("IntValue")
+                            amountValue.Name = "Amount"
+                            amountValue.Value = amount
+                            amountValue.Parent = existingItem
+                        end
+                    else
+                        local newItem = tool:Clone()
+                        newItem.Parent = player.Backpack
+
+                        if newItem:FindFirstChild("Amount") then
+                            newItem.Amount.Value = amount
+                        else
+                            local amountValue = Instance.new("IntValue")
+                            amountValue.Name = "Amount"
+                            amountValue.Value = amount
+                            amountValue.Parent = newItem
+                        end
+                        trackItemPlacement(newItem)
+                    end
+
+                    showNotification("+ " .. amount .. " " .. itemName)
+                else
+                    showNotification("Invalid amount entered.")
+                end
             end)
+
+            uiItemDisplays[itemName] = {
+                label = itemNameLabel,
+                originalTool = tool
+            }
         end
     else
         warn("Tools folder not found in ReplicatedStorage.")
     end
 end
 
-	populateItemList()
+local function createItemsList()
+    local itemsListGui = Instance.new("ScreenGui")
+    itemsListGui.Name = "ItemsListGui"
+    itemsListGui.ResetOnSpawn = false
+    itemsListGui.Parent = player.PlayerGui
 
-	local function updateCanvasSize()
-		local layoutHeight = UIListLayout.AbsoluteContentSize.Y
-		itemListFrame.CanvasSize = UDim2.new(0, 0, 0, layoutHeight)
-	end
+    local itemsFrame = Instance.new("Frame")
+    itemsFrame.Name = "ItemsFrame"
+    itemsFrame.Size = UDim2.new(0.18, 0, 0.40, 0)
+    itemsFrame.Position = UDim2.new(-itemsFrame.Size.X.Scale, 0, 0.80, 0)
+    itemsFrame.AnchorPoint = Vector2.new(0, 0.5)
+    itemsFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    itemsFrame.BackgroundTransparency = 0.1
+    itemsFrame.BorderSizePixel = 0
+    itemsFrame.Active = true
+    itemsFrame.Draggable = false
+    itemsFrame.Visible = true
+    itemsFrame.Parent = itemsListGui
 
-	UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
-	updateCanvasSize()
+    local uiCornerFrame = Instance.new("UICorner")
+    uiCornerFrame.CornerRadius = UDim.new(0, 12)
+    uiCornerFrame.Parent = itemsFrame
 
-	local searchBar = Instance.new("TextBox")
-	searchBar.Size = UDim2.new(0.9, 0, 0, 30)
-	searchBar.Position = UDim2.new(0.05, 0, 0.12, 0)
-	searchBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-	searchBar.BackgroundTransparency = 0.5
-	searchBar.BorderSizePixel = 0
-	searchBar.TextColor3 = Color3.fromRGB(255, 255, 255)
-	searchBar.PlaceholderText = "Search items..."
-	searchBar.Font = Enum.Font.Gotham
-	searchBar.TextSize = 16
-	searchBar.Parent = itemsFrame
+    local frameGradient = Instance.new("UIGradient")
+    frameGradient.Color = ColorSequence.new(Color3.fromRGB(20, 20, 20), Color3.fromRGB(5, 5, 5))
+    frameGradient.Rotation = 90
+    frameGradient.Parent = itemsFrame
 
-	local searchBarCorner = Instance.new("UICorner")
-	searchBarCorner.CornerRadius = UDim.new(0, 8)
-	searchBarCorner.Parent = searchBar
+    local searchBar = Instance.new("TextBox")
+    searchBar.Size = UDim2.new(0.9, 0, 0, 35)
+    searchBar.Position = UDim2.new(0.05, 0, 0.05, 0)
+    searchBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    searchBar.BackgroundTransparency = 0.2
+    searchBar.BorderSizePixel = 0
+    searchBar.TextColor3 = Color3.fromRGB(255, 255, 255)
+    searchBar.PlaceholderText = "Filter items..."
+    searchBar.Text = ""
+    searchBar.Font = Enum.Font.Gotham
+    searchBar.TextSize = 18
+    searchBar.Parent = itemsFrame
 
-	searchBar:GetPropertyChangedSignal("Text"):Connect(function()
-		local searchText = string.lower(searchBar.Text)
-		for _, itemButton in ipairs(itemListFrame:GetChildren()) do
-			if itemButton:IsA("TextButton") then
-				local itemName = itemButton.Text:lower()
-				if searchText == "" or itemName:find(searchText, 1, true) then
-					itemButton.Visible = true
-				else
-					itemButton.Visible = false
-				end
-			end
-		end
-	end)
+    local searchBarCorner = Instance.new("UICorner")
+    searchBarCorner.CornerRadius = UDim.new(0, 8)
+    searchBarCorner.Parent = searchBar
 
-	return itemsListGui
+    local itemListFrame = Instance.new("ScrollingFrame")
+    itemListFrame.Name = "ItemListFrame"
+    itemListFrame.Size = UDim2.new(0.9, 0, 0.85, 0)
+    itemListFrame.Position = UDim2.new(0.05, 0, 0.15, 0)
+    itemListFrame.BackgroundTransparency = 1
+    itemListFrame.ScrollBarThickness = 6
+    itemListFrame.Parent = itemsFrame
+
+    local scrollBarBackground = Instance.new("Frame")
+    scrollBarBackground.Size = UDim2.new(0, 6, 1, 0)
+    scrollBarBackground.Position = UDim2.new(1, -6, 0, 0)
+    scrollBarBackground.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    scrollBarBackground.BorderSizePixel = 0
+    scrollBarBackground.Parent = itemListFrame
+
+    local scrollBarBackgroundCorner = Instance.new("UICorner")
+    scrollBarBackgroundCorner.CornerRadius = UDim.new(0, 3)
+    scrollBarBackgroundCorner.Parent = scrollBarBackground
+
+    local scrollBarBackgroundGradient = Instance.new("UIGradient")
+    scrollBarBackgroundGradient.Color = ColorSequence.new(Color3.fromRGB(15, 15, 15), Color3.fromRGB(5, 5, 5))
+    scrollBarBackgroundGradient.Rotation = 90
+    scrollBarBackgroundGradient.Parent = scrollBarBackground
+
+    itemListFrame.ScrollBarImageColor3 = Color3.fromRGB(0, 0, 0)
+
+    local UIGridLayout = Instance.new("UIGridLayout")
+    UIGridLayout.Parent = itemListFrame
+    UIGridLayout.CellSize = UDim2.new(1, 0, 0, 40)
+    UIGridLayout.CellPadding = UDim2.new(0, 0, 0, 5)
+    UIGridLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    UIGridLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+    populateItemList(itemsListGui)
+
+    local function updateCanvasSize()
+        local contentHeight = UIGridLayout.AbsoluteContentSize.Y
+        itemListFrame.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
+    end
+
+    UIGridLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateCanvasSize)
+    updateCanvasSize()
+
+    searchBar:GetPropertyChangedSignal("Text"):Connect(function()
+        local searchText = string.lower(searchBar.Text)
+        for _, itemContainer in ipairs(itemListFrame:GetChildren()) do
+            if itemContainer:IsA("Frame") and itemContainer:FindFirstChildOfClass("TextLabel") then
+                local itemNameLabel = itemContainer:FindFirstChildOfClass("TextLabel")
+                local itemName = itemNameLabel.Text:lower()
+                if searchText == "" or itemName:find(searchText, 1, true) then
+                    itemContainer.Visible = true
+                else
+                    itemContainer.Visible = false
+                end
+            end
+        end
+    end)
+
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Name = "ToggleButton"
+    toggleButton.Size = UDim2.new(0, 40, 0, 80)
+    toggleButton.Position = UDim2.new(0, 0, 0.80, 0)
+    toggleButton.AnchorPoint = Vector2.new(0, 0.5)
+    toggleButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+    toggleButton.BackgroundTransparency = 0.1
+    toggleButton.BorderSizePixel = 0
+    toggleButton.Text = "→"
+    toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleButton.TextSize = 30
+    toggleButton.Font = Enum.Font.GothamSemibold
+    toggleButton.Parent = itemsListGui
+
+    local toggleButtonCorner = Instance.new("UICorner")
+    toggleButtonCorner.CornerRadius = UDim.new(0, 8)
+    toggleButtonCorner.Parent = toggleButton
+
+    local toggleButtonGradient = Instance.new("UIGradient")
+    toggleButtonGradient.Color = ColorSequence.new(Color3.fromRGB(70, 70, 70), Color3.fromRGB(50, 50, 50))
+    toggleButtonGradient.Rotation = 90
+    toggleButtonGradient.Parent = toggleButton
+
+    local panelOpen = false
+
+    local function slidePanel(open)
+        local targetFramePosition
+        local targetButtonPosition
+        local buttonText
+
+        if open then
+            targetFramePosition = UDim2.new(0, 0, 0.80, 0)
+            targetButtonPosition = UDim2.new(itemsFrame.Size.X.Scale, 0, 0.80, 0)
+            buttonText = "←"
+        else
+            targetFramePosition = UDim2.new(-itemsFrame.Size.X.Scale, 0, 0.80, 0)
+            targetButtonPosition = UDim2.new(0, 0, 0.80, 0)
+            buttonText = "→"
+        end
+
+        local frameTween = game:GetService("TweenService"):Create(
+            itemsFrame,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Position = targetFramePosition}
+        )
+        frameTween:Play()
+
+        local buttonTween = game:GetService("TweenService"):Create(
+            toggleButton,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Position = targetButtonPosition}
+        )
+        buttonTween:Play()
+
+        toggleButton.Text = buttonText
+        panelOpen = open
+    end
+
+    toggleButton.MouseButton1Click:Connect(function()
+        slidePanel(not panelOpen)
+    end)
+
+    slidePanel(false)
+
+    return itemsListGui
 end
 
 local function getDropsFolder()
@@ -376,7 +528,6 @@ local function getDropsFolder()
             return dropsFolder
         end
     end
-
     warn("Drops folder not found or created in any island.")
     return nil
 end
@@ -431,7 +582,6 @@ local function pickUpItem(tool)
         existingTool.Amount.Value += 1
     else
         tool.Parent = player.Backpack
-
         if not tool:FindFirstChild("Amount") then
             local amountValue = Instance.new("IntValue")
             amountValue.Name = "Amount"
@@ -439,7 +589,6 @@ local function pickUpItem(tool)
             amountValue.Parent = tool
         end
     end
-
     warn("Picked up tool:", tool.Name, "Amount increased.")
     tool:Destroy()
 end
@@ -451,50 +600,42 @@ UIS.InputBegan:Connect(function(input)
             dropItem(tool)
         end
     elseif input.KeyCode == Enum.KeyCode.F then
-    local target = mouse.Target
-    if target then
-        local dropsFolder = Workspace.Islands:FindFirstChild("Drops")
-        if dropsFolder and target:IsDescendantOf(dropsFolder) then
-            local tool = target.Parent
-            if tool and tool:IsA("Tool") then
-                pickUpItem(tool)
+        local target = mouse.Target
+        if target then
+            local dropsFolder = getDropsFolder()
+            if dropsFolder and target:IsDescendantOf(dropsFolder) then
+                local toolCandidate = target.Parent
+                if toolCandidate and toolCandidate:IsA("Tool") then
+                    pickUpItem(toolCandidate)
+                elseif target:IsA("BasePart") and target.Parent:IsA("Tool") then
+                    pickUpItem(target.Parent)
+                else
+                    warn("Hovered over invalid tool or non-tool object. Parent:", target.Parent, "Class:", target.Parent and target.Parent.ClassName)
+                end
             else
-                warn("Hovered over invalid tool or non-tool object. Parent:", target.Parent, "Class:", target.Parent and target.Parent.ClassName)
+                warn("Hovered target is not part of Drops. Target Parent:", target.Parent)
             end
         else
-            warn("Hovered target is not part of Drops. Target Parent:", target.Parent)
+            warn("No target detected under mouse.")
         end
-    else
-        warn("No target detected under mouse.")
     end
-end
 end)
 
 local function deleteExistingItemsListGui()
-	local existingGui = player.PlayerGui:FindFirstChild("ItemsListGui")
-	if existingGui then
-		existingGui:Destroy()
-	end
+    local existingGui = player.PlayerGui:FindFirstChild("ItemsListGui")
+    if existingGui then
+        existingGui:Destroy()
+    end
 end
 
 deleteExistingItemsListGui()
 
-createItemsList()
-wait("0.01")
-local clientBlock = game.ReplicatedStorage:WaitForChild("rbxts_include"):WaitForChild("node_modules"):WaitForChild("@rbxts"):WaitForChild("net"):WaitForChild("out"):WaitForChild("_NetManaged"):FindFirstChild("CLIENT_BLOCK_PLACE_REQUEST")
+local createdGui = createItemsList()
+setupBackpackListeners()
 
+local clientBlock = game.ReplicatedStorage:WaitForChild("rbxts_include"):WaitForChild("node_modules"):WaitForChild("@rbxts"):WaitForChild("net"):WaitForChild("out"):WaitForChild("_NetManaged"):FindFirstChild("CLIENT_BLOCK_PLACE_REQUEST")
 if clientBlock then
     clientBlock:Destroy()
-else
-    warn("CLIENT_BLOCK_PLACE_REQUEST not found")
 end
-mouse.TargetFilter = Workspace.Islands
 
-local tool = target.Parent
-if tool and tool:IsA("Tool") then
-    pickUpItem(tool)
-elseif target:IsA("BasePart") and target.Parent:IsA("Tool") then
-    pickUpItem(target.Parent)
-else
-    warn("Invalid target under mouse.")
-end
+mouse.TargetFilter = Workspace.Islands
